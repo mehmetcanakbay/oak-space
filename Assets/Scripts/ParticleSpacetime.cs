@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using Unity.Mathematics;
 
 public class ParticleSpacetime : MonoBehaviour, ISpacetimeGrid
 {
@@ -68,7 +69,7 @@ public class ParticleSpacetime : MonoBehaviour, ISpacetimeGrid
         return particles;
     }
 
-    public void SetPositions(NativeArray<Vector3> newPos) {
+    public void SetPositions(ref NativeArray<float3> newPos) {
         for (int k = 0; k<particles.Length; k++) {
             particles[k].position = newPos[k];
         }

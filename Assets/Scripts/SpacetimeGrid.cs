@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using Unity.Mathematics;
 
 //It's ~10FPS improvement frm the particlespactime.
 //I'll keep this because this can cull. Particle one doesnt cull, it renders all the spheres.
@@ -21,6 +22,7 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
     private Vector3 spaceTimeOffset;
     private Matrix4x4[] matricesTRS;
     private RenderParams renderParams;
+    private MaterialPropertyBlock materialPropertyBlock;
 
     private const int MaxInstances = 1023; 
     private Matrix4x4[] batchMatrices; // Preallocate a batch array to reuse
@@ -29,7 +31,7 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
         World.Instance.spacetime = this;
         spaceTimeOffset = transform.position;
         renderParams = new RenderParams(material);
-
+        materialPropertyBlock = new MaterialPropertyBlock();
         batchMatrices = new Matrix4x4[MaxInstances];
 
         CreateShape();
@@ -74,7 +76,8 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
                 batchMatrices[k] = matricesTRS[startIndex + k];
             }
 
-            Graphics.RenderMeshInstanced(renderParams, mesh, 0, batchMatrices, count);
+            Graphics.DrawMeshInstanced(mesh, 0, material, batchMatrices, count, materialPropertyBlock, UnityEngine.Rendering.ShadowCastingMode.Off, false); //this doesnt generate garbage but it makes FPS slower cus no culling
+            // Graphics.RenderMeshInstanced(renderParams, mesh, 0, batchMatrices, count);
         }
     }
 
@@ -82,7 +85,7 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
         return initPositions;
     }
 
-    public void SetPositions(NativeArray<Vector3> newPos) {
+    public void SetPositions(ref NativeArray<float3> newPos) {
         for (int k = 0; k<currPositions.Length; k++) {
             matricesTRS[k].SetTRS(newPos[k], Quaternion.identity, Vector3.one*nodeSizes);
         }

@@ -103,21 +103,22 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
 {
     public double distortionStrength = 50.0;
     private int celestialObjectCount;
+    private CelestialObject[] celestialObjects;
     private Transform[] celestialObjectsTransforms;
     private Transform transformCache;
     private bool initialized = false;
 
-    private NativeArray<Vector3> spacetimePositionCache;
-    private NativeArray<Vector3> initPositions;
+    private NativeArray<float3> spacetimePositionCache;
+    private NativeArray<float3> initPositions;
     private NativeArray<double> celestialObjectMasses;
-    private NativeArray<Vector3> celestialObjectPositions;
+    private NativeArray<float3> celestialObjectPositions;
     
     private ISpacetimeGrid spacetime;
 
     private GridPositionJob gridPositionJob;
 
     private void Start() {
-        CelestialObject[] celestialObjects = Object.FindObjectsOfType<CelestialObject>();
+        celestialObjects = Object.FindObjectsOfType<CelestialObject>();
         celestialObjectCount = celestialObjects.Length;
         celestialObjectsTransforms = new Transform[celestialObjectCount];
 
@@ -136,67 +137,67 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
         }
 
         Vector3[] initPosRef = spacetime.GetInitPositions();
-        initPositions = new NativeArray<Vector3>(initPosRef.Length, Allocator.Persistent);
-        spacetimePositionCache = new NativeArray<Vector3>(initPosRef.Length, Allocator.Persistent);
-        celestialObjectPositions = new NativeArray<Vector3>(celestialObjectCount, Allocator.Persistent);
+        initPositions = new NativeArray<float3>(initPosRef.Length, Allocator.Persistent);
+        spacetimePositionCache = new NativeArray<float3>(initPosRef.Length, Allocator.Persistent);
+        celestialObjectPositions = new NativeArray<float3>(celestialObjectCount, Allocator.Persistent);
 
         for (int i = 0; i<initPosRef.Length;i++) {
             initPositions[i] = initPosRef[i];
         }
     }
 
-    protected void DistortGrid() {
-        if (spacetime == null) {return;}
-        // else {Debug.LogError("Spacetime is null in object: " + this.gameObject.name);}
-        //null checks are done
+    // protected void DistortGrid() {
+    //     if (spacetime == null) {return;}
+    //     // else {Debug.LogError("Spacetime is null in object: " + this.gameObject.name);}
+    //     //null checks are done
 
         
-        //generates 15KB of GC, TODO: refactor
-        // spacetimePositionCache = (Vector3[])spacetime.GetInitPositions().Clone(); //Remember, this is a reference, so clone.
+    //     //generates 15KB of GC, TODO: refactor
+    //     // spacetimePositionCache = (Vector3[])spacetime.GetInitPositions().Clone(); //Remember, this is a reference, so clone.
         
 
 
-        //down to 220B~ with this.
+    //     //down to 220B~ with this.
         
 
-        Vector3[] initPosRef = spacetime.GetInitPositions();
+    //     Vector3[] initPosRef = spacetime.GetInitPositions();
         
-        for (int k = 0; k<spacetimePositionCache.Length; k++) {
-            spacetimePositionCache[k] = initPosRef[k];
-        }
+    //     for (int k = 0; k<spacetimePositionCache.Length; k++) {
+    //         spacetimePositionCache[k] = initPosRef[k];
+    //     }
             
-        for (int i = 0; i<initPosRef.Length; i++) {
-            // float maxStrength = 0.0f;
-            // Vector3 maxDir = Vector3.one;
-            for (int j = 0; j<celestialObjectCount; j++) {
-                double mass = celestialObjectMasses[j];
-                transformCache = celestialObjectsTransforms[j];
+    //     for (int i = 0; i<initPosRef.Length; i++) {
+    //         // float maxStrength = 0.0f;
+    //         // Vector3 maxDir = Vector3.one;
+    //         for (int j = 0; j<celestialObjectCount; j++) {
+    //             double mass = celestialObjectMasses[j];
+    //             transformCache = celestialObjectsTransforms[j];
 
-                float dist = Vector3.Distance(transformCache.position, initPosRef[i]); //get the distance for the eq (r^2 part)
+    //             float dist = math.distance(transformCache.position, initPosRef[i]); //get the distance for the eq (r^2 part)
 
-                Vector3 dir = (transformCache.position-initPosRef[i]).normalized; //get the direction
+    //             float3 dir = (transformCache.position-initPosRef[i]).normalized; //get the direction
 
-                //delete the 1- part, no need to know "how much it is similar to a normal spacetime". besides, it breaks it.
-                double einsteinForce = math.pow(((2*Universe.G*mass) / (dist*Universe.c*Universe.c)), 1.0); //change from newton to schwarzschild spatial distortion
-                einsteinForce = einsteinForce <= 0 ? 0.0000001 : einsteinForce; 
-                einsteinForce = math.sqrt(einsteinForce);
-                // Debug.Log(einsteinForce);
+    //             //delete the 1- part, no need to know "how much it is similar to a normal spacetime". besides, it breaks it.
+    //             double einsteinForce = math.pow(((2*Universe.G*mass) / (dist*Universe.c*Universe.c)), 1.0); //change from newton to schwarzschild spatial distortion
+    //             einsteinForce = einsteinForce <= 0 ? 0.0000001 : einsteinForce; 
+    //             einsteinForce = math.sqrt(einsteinForce);
+    //             // Debug.Log(einsteinForce);
 
-                float remappedStrength = (float)math.remap(0.0, 1.0, 
-                0.0, distortionStrength, 
-                (float)einsteinForce);
+    //             float remappedStrength = (float)math.remap(0.0, 1.0, 
+    //             0.0, distortionStrength, 
+    //             (float)einsteinForce);
                 
-                remappedStrength = Mathf.Clamp(remappedStrength, 0.0f, dist-0.1f);
-                spacetimePositionCache[i] = spacetimePositionCache[i] + dir*((float)remappedStrength); //move particle towards dir
-            }
-        }
-
-    }
+    //             remappedStrength = Mathf.Clamp(remappedStrength, 0.0f, dist-0.1f);
+    //             spacetimePositionCache[i] = spacetimePositionCache[i] + dir*((float)remappedStrength); //move particle towards dir
+    //         }
+    //     }
+    // }
 
     private void Update() {
         // DistortGrid();
         for (int i = 0; i<celestialObjectCount; i++) {
             celestialObjectPositions[i] = celestialObjectsTransforms[i].position;
+            celestialObjectMasses[i] = celestialObjects[i].GetMass();
         }
         gridPositionJob = new GridPositionJob();
         gridPositionJob.initPosRef = initPositions;
@@ -205,9 +206,9 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
         gridPositionJob.celestialObjectPositions = celestialObjectPositions;
         gridPositionJob.distortionStrength = distortionStrength;
         gridPositionJob.celestialObjectCount = celestialObjectCount;
-        gridPositionJob.Schedule(initPositions.Length, 64).Complete();
+        gridPositionJob.Schedule(initPositions.Length, 512).Complete();
 
-        spacetime.SetPositions(spacetimePositionCache);
+        spacetime.SetPositions(ref spacetimePositionCache);
     }
 
     private void OnDestroy() {
@@ -220,10 +221,10 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
 
 [BurstCompile]
 internal struct GridPositionJob : IJobParallelFor {
-    public NativeArray<Vector3> spacetimePositionCache;
-    [ReadOnly] public NativeArray<Vector3> initPosRef;
+    public NativeArray<float3> spacetimePositionCache;
+    [ReadOnly] public NativeArray<float3> initPosRef;
     [ReadOnly] public NativeArray<double> celestialObjectMasses;
-    [ReadOnly] public NativeArray<Vector3> celestialObjectPositions;
+    [ReadOnly] public NativeArray<float3> celestialObjectPositions;
     public double distortionStrength;
     public int celestialObjectCount;
 
@@ -233,9 +234,9 @@ internal struct GridPositionJob : IJobParallelFor {
         for (int j = 0; j<celestialObjectCount; j++) {
             double mass = celestialObjectMasses[j];
 
-            float dist = Vector3.Distance(celestialObjectPositions[j], initPosRef[i]); //get the distance for the eq (r^2 part)
+            float dist = math.distance(celestialObjectPositions[j], initPosRef[i]); //get the distance for the eq (r^2 part)
 
-            Vector3 dir = (celestialObjectPositions[j]-initPosRef[i]).normalized; //get the direction
+            float3 dir = math.normalize(celestialObjectPositions[j]-initPosRef[i]); //get the direction
 
             //delete the 1- part, no need to know "how much it is similar to a normal spacetime". besides, it breaks it.
             double einsteinForce = math.pow(((2*Universe.G*mass) / (dist*Universe.c*Universe.c)), 1.0); //change from newton to schwarzschild spatial distortion
@@ -245,9 +246,9 @@ internal struct GridPositionJob : IJobParallelFor {
 
             float remappedStrength = (float)math.remap(0.0, 1.0, 
             0.0, distortionStrength, 
-            (float)einsteinForce);
+            einsteinForce);
             
-            remappedStrength = Mathf.Clamp(remappedStrength, 0.0f, dist-0.1f);
+            remappedStrength = math.clamp(remappedStrength, 0.0f, dist-0.1f);
             spacetimePositionCache[i] = spacetimePositionCache[i] + dir*((float)remappedStrength); //move particle towards dir
         }
     }
