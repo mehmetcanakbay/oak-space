@@ -89,7 +89,7 @@ public class BlackHole : CelestialObject
         evt.Temp = Temperature(mass);
         evt.Mass = mass;    
 
-        // EventManager.Broadcast(evt);
+        EventManager.Broadcast(evt);
 
 
         // LuminosityEvent?.Invoke(luminfo.Luminosity);

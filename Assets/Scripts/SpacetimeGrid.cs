@@ -24,17 +24,21 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
     private RenderParams renderParams;
     private MaterialPropertyBlock materialPropertyBlock;
 
-    private const int MaxInstances = 1023; 
+    private const int MaxInstances = 2048; 
     private Matrix4x4[] batchMatrices; // Preallocate a batch array to reuse
 
-    void Start() {
-        World.Instance.spacetime = this;
+    public void Initialize() {
+        World.Instance.spacetime = this as ISpacetimeGrid;
         spaceTimeOffset = transform.position;
         renderParams = new RenderParams(material);
         materialPropertyBlock = new MaterialPropertyBlock();
         batchMatrices = new Matrix4x4[MaxInstances];
 
         CreateShape();
+    }
+
+    void Start() {
+
     }
 
     void CreateShape() {
@@ -53,12 +57,10 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
             }
         }
 
+
         initPositions = (Vector3[])currPositions.Clone();
     }
 
-    void Update() {
-        // RenderShapes();
-    }
 
     void RenderShapes() {
         //why do I have to do this? I dont understand.
@@ -67,7 +69,11 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
         //Mine doesnt. Everywhere on Google says that there is a 1023 limit. I'm confused.
         int totalInstances = currPositions.Length;
         int batchCount = Mathf.CeilToInt((float)totalInstances / MaxInstances);
+        //well it works in ver. 2024? big perf. improvement as well. 120 fps -> 160fps
+        Graphics.RenderMeshInstanced(renderParams, mesh, 0, matricesTRS);
 
+        //so this becomes useless
+        /******************************************DEPRECATED
         for (int i = 0; i < batchCount; i++) {
             int startIndex = i * MaxInstances;
             int count = Mathf.Min(MaxInstances, totalInstances - startIndex);
@@ -79,6 +85,7 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
             Graphics.DrawMeshInstanced(mesh, 0, material, batchMatrices, count, materialPropertyBlock, UnityEngine.Rendering.ShadowCastingMode.Off, false); //this doesnt generate garbage but it makes FPS slower cus no culling
             // Graphics.RenderMeshInstanced(renderParams, mesh, 0, batchMatrices, count);
         }
+        **************************************************/
     }
 
     public Vector3[] GetInitPositions() {
