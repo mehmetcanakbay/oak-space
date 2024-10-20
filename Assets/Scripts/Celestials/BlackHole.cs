@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -15,7 +16,7 @@ public struct LuminosityInfo {
 
 public class BlackHole : CelestialObject
 {
-    public double unitChange = 86400; //from seconds to days.
+    public double unitChange = 31536000; //from seconds to days.
     /// <summary>
     /// Events user can subscribe to for various reasons (in this case UI)
     /// </summary>
@@ -28,7 +29,6 @@ public class BlackHole : CelestialObject
     private void Start() {
         initMass = mass;
         evt = new HawkingRadiationInfoEvent();
-
     }
 
     public double Luminosity(double mass) {
@@ -96,6 +96,13 @@ public class BlackHole : CelestialObject
         // EvapRateEvent?.Invoke(luminfo.EvaporationRatePerSecond);
         // MassEvent?.Invoke(mass);
         // TempEvent?.Invoke(Temperature(mass));
+    }
+
+    override public void Reset() {
+        base.Reset();
+        initMass = mass;
+        // mass = initMass;
+        // mass = initMass;
     }
 
     

@@ -16,6 +16,6 @@ public class UI_TimeScale : MonoBehaviour
     void Update()
     {
         //obv need to make this an event but im lazy
-        timeScaleText.text = Simulation.timeScale.ToString(); //generates 32B of gorbage okay this is dogshite
+        timeScaleText.text = Simulation.timeScale.ToString() + " years"; //generates 32B of gorbage okay this is dogshite
     }
 }

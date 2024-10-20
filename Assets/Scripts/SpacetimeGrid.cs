@@ -4,16 +4,17 @@ using Unity.Collections;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 using Unity.Mathematics;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 //It's ~10FPS improvement frm the particlespactime.
 //I'll keep this because this can cull. Particle one doesnt cull, it renders all the spheres.
 public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
 {
-    [SerializeField] private int xSize = 20;
-    [SerializeField] private int ySize = 20;
-    [SerializeField] private int zSize = 20;
-    [SerializeField] private float offset = 0.0f;
-    [SerializeField] private float nodeSizes = 0.1f;
+    [SerializeField] public int xSize = 20;
+    [SerializeField] public int ySize = 20;
+    [SerializeField] public int zSize = 20;
+    [SerializeField] public float offset = 0.0f;
+    [SerializeField] public float nodeSizes = 0.1f;
     [SerializeField] private Mesh mesh;
     [SerializeField] private Material material;
 
@@ -102,6 +103,10 @@ public class SpacetimeGrid : MonoBehaviour, ISpacetimeGrid
 
     public int GetGridLength() {
         return (xSize) * (ySize) * (zSize);
+    }
+
+    public Matrix4x4[] GetMatrixTRS() {
+        return matricesTRS;
     }
 
 }

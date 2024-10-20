@@ -20,6 +20,10 @@ public abstract class CelestialObject : MonoBehaviour
         return upper/dist;
     }
 
+    virtual public void Reset() {
+
+    }
+
     /*
     protected void DistortGrid() {
         Vector3[] pos = gridToEffect.GetGridPositions();

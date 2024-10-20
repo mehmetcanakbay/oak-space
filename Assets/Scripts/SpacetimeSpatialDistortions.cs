@@ -7,6 +7,7 @@ using Unity.Burst;
 using Unity.Jobs;
 using UnityEngine.Jobs;
 using UnityEngine.Rendering;
+using System;
 
 //Non threaded version
 /*public class SpacetimeSpatialDistortions : MonoBehaviour
@@ -126,7 +127,7 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
         if (spacetimeGrid) 
             spacetimeGrid.Initialize();
         
-        celestialObjects = Object.FindObjectsOfType<CelestialObject>();
+        celestialObjects = GameObject.FindObjectsByType<CelestialObject>(FindObjectsSortMode.None);
         celestialObjectCount = celestialObjects.Length;
         celestialObjectsTransforms = new Transform[celestialObjectCount];
 
@@ -152,6 +153,14 @@ public class SpacetimeSpatialDistortions : MonoBehaviour
         for (int i = 0; i<initPosRef.Length;i++) {
             initPositions[i] = initPosRef[i];
         }
+    }
+
+    public void Reset() {
+        spacetimePositionCache.Dispose();
+        initPositions.Dispose();
+        celestialObjectMasses.Dispose();
+        celestialObjectPositions.Dispose();
+        Start();
     }
 
 
@@ -197,20 +206,25 @@ internal struct GridPositionJob : IJobParallelFor {
     public int celestialObjectCount;
 
     public void Execute(int i) {
+        float3 totalDirection = new float3(0.0f,0.0f,0.0f); 
         spacetimePositionCache[i] = initPosRef[i];
+        float maxDirMagn = 0.0f;
+
+        distortionStrength = math.max(distortionStrength, 1e-10);
 
         for (int j = 0; j<celestialObjectCount; j++) {
             double mass = celestialObjectMasses[j];
             // mass=mass/1e+30;
 
             // float dist = math.distance(celestialObjectPositions[j], initPosRef[i])*(1/1000.0f)*(149597871.0f); //get the distance for the eq (r^2 part)
+            maxDirMagn = math.max(math.distance(celestialObjectPositions[j], initPosRef[i]), maxDirMagn);
             float dist = math.distance(celestialObjectPositions[j], initPosRef[i])*(float)distMultiplier; //get the distance for the eq (r^2 part)
             float realDist = dist/(float)distMultiplier; 
-            if (dist <= 0.1f) return;
+            if (dist <= 0.1f) continue;
             float3 dir = math.normalize(celestialObjectPositions[j]-initPosRef[i]); //get the direction
 
             //delete the 1- part, no need to know "how much it is similar to a normal spacetime". besides, it breaks it.
-            double einsteinForce = math.pow(((2*Universe.G*mass) / (dist*Universe.c*Universe.c)), 1.0); //change from newton to schwarzschild spatial distortion
+            double einsteinForce = math.pow(((2*Universe.G*mass) / (realDist*Universe.c*Universe.c)), 1.0); //change from newton to schwarzschild spatial distortion
             einsteinForce = math.max(1e-10, einsteinForce);
             einsteinForce = math.sqrt(einsteinForce);
             // Debug.Log(einsteinForce);
@@ -221,8 +235,15 @@ internal struct GridPositionJob : IJobParallelFor {
             float remappedStrength = (float)(einsteinForce*distortionStrength);
             // if (i==0) 
             //     Debug.Log(remappedStrength);
-            remappedStrength = math.clamp(remappedStrength, 0.0f, realDist-0.1f);
-            spacetimePositionCache[i] = spacetimePositionCache[i] + dir*remappedStrength; //move particle towards dir
+            // remappedStrength = math.clamp(remappedStrength, 0.0f, realDist-0.1f);
+            remappedStrength = math.max(remappedStrength, 0.0f);
+
+            totalDirection += dir*remappedStrength;
+            float magn = math.length(totalDirection);
+            totalDirection = totalDirection / math.length(totalDirection);
+            totalDirection = totalDirection * Math.Min(math.length(celestialObjectPositions[j]-initPosRef[i]), magn);
+            // totalDirection = math.clamp(totalDirection, 0.0f, 10000);
+            spacetimePositionCache[i] = initPosRef[i] + totalDirection; //move particle towards dir
         }
     }
 }

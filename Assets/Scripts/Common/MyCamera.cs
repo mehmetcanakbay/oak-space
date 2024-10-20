@@ -16,7 +16,16 @@ public class MyCamera : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0)) {
+        if (Input.GetKeyDown(KeyCode.KeypadPlus)) {
+            speed += 5.0f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.KeypadMinus)) {
+            speed -= 5.0f;
+        }
+
+        
+        if (Input.GetKeyDown(KeyCode.Mouse1)) {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
             currentlyLockedIn = true;
