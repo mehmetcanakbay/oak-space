@@ -14,5 +14,7 @@ Keep in mind that this is computationally heavy. Do NOT go overboard with grid s
 
 There are also some gems in here, for example, there is no example on how to draw 5x5x5 grid lines in Unity. You can see how I achieved this in [SpacetimeGridLines.cs](https://github.com/mehmetcanakbay/oak-space/blob/main/Assets/Scripts/SpacetimeGridLines.cs) code file.
 
+Tested on Unity 2023.2.20f1
+
 Built version is available on itch.io.
 https://mehmetcanakbay.itch.io/oak-space
